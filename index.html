@@ -3,81 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jarvis Widget</title>
+    <title>Jarvis Widget v3</title>
     <style>
         :root { --neon: #00fbff; --dark: #0a0a0a; }
-        body {
-            margin: 0; padding: 0; background: transparent;
-            font-family: 'Segoe UI', sans-serif; overflow: hidden;
-        }
-
-        /* Le Widget Circulaire */
+        body { margin: 0; padding: 0; background: transparent; font-family: sans-serif; overflow: hidden; }
         #jarvis-circle {
-            width: 60px; height: 60px;
-            background: var(--dark);
-            border: 2px solid var(--neon);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px var(--neon);
-            cursor: pointer; position: fixed; top: 10px; left: 10px;
+            width: 60px; height: 60px; background: var(--dark); border: 2px solid var(--neon);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px var(--neon); cursor: pointer; position: fixed; top: 10px; left: 10px;
             z-index: 1000; transition: 0.3s;
         }
-
-        #jarvis-circle:active { transform: scale(0.9); }
-
-        /* Le Panneau d'Analyse (caché par défaut) */
         #panel {
-            display: none; width: 95vw; max-height: 80vh;
-            background: rgba(10, 10, 10, 0.95);
-            border: 1px solid var(--neon);
-            border-radius: 15px; position: fixed; top: 80px; left: 2.5vw;
-            color: white; padding: 15px; box-sizing: border-box;
-            overflow-y: auto; z-index: 999;
+            display: none; width: 95vw; max-height: 80vh; background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--neon); border-radius: 15px; position: fixed; top: 80px; left: 2.5vw;
+            color: white; padding: 15px; box-sizing: border-box; overflow-y: auto; z-index: 999;
         }
-
-        .loader {
-            width: 20px; height: 20px; border: 2px solid var(--neon);
-            border-top: 2px solid transparent; border-radius: 50%;
-            animation: spin 1s linear infinite; display: none;
-        }
-
+        .loader { width: 20px; height: 20px; border: 2px solid var(--neon); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        input { 
-            width: 100%; background: #222; border: 1px solid var(--neon); 
-            color: white; padding: 10px; margin-top: 10px; border-radius: 5px;
-        }
-
-        #result { font-size: 13px; line-height: 1.4; margin-top: 10px; }
-        .close-btn { color: var(--neon); float: right; font-weight: bold; cursor: pointer; }
+        input { width: 100%; background: #222; border: 1px solid var(--neon); color: white; padding: 10px; margin-top: 10px; border-radius: 5px; }
+        button { width:100%; margin-top:10px; background:var(--neon); border:none; padding:12px; font-weight:bold; border-radius:5px; cursor:pointer; }
+        #result { font-size: 13px; line-height: 1.4; margin-top: 10px; color: #eee; }
+        .close-btn { color: var(--neon); float: right; font-weight: bold; cursor: pointer; padding: 5px; }
     </style>
 </head>
 <body>
 
-<!-- La Bulle Jarvis -->
-<div id="jarvis-circle" onclick="handleClick()" ondblclick="handleDoubleClick()">
-    <span id="icon" style="color: var(--neon); font-weight: bold; font-size: 10px; text-align: center;">JARVIS</span>
+<div id="jarvis-circle" onclick="handleClick()">
+    <span id="icon" style="color: var(--neon); font-weight: bold; font-size: 10px;">JARVIS</span>
     <div id="mini-loader" class="loader"></div>
 </div>
 
-<!-- Le Panneau de contrôle -->
 <div id="panel">
     <span class="close-btn" onclick="togglePanel()">X</span>
-    <div id="status" style="color: var(--neon); font-size: 12px;">SYSTÈME EN ATTENTE</div>
+    <div id="status" style="color: var(--neon); font-size: 11px; margin-bottom:10px;">SYSTÈME JARVIS PRÊT</div>
     
-    <div id="link-section" style="display:none;">
+    <div id="link-section">
         <input type="text" id="urlInput" placeholder="Coller lien vidéo ou web ici...">
-        <button onclick="analyzeUrl()" style="width:100%; margin-top:5px; background:var(--neon); border:none; padding:8px; font-weight:bold;">ANALYSER LIEN</button>
+        <button onclick="analyzeUrl()">ANALYSER LIEN</button>
     </div>
 
     <div id="result">
-        Appuie 1x pour analyser l'écran (Screenshot).<br>
-        Appuie 2x pour analyser un lien.
+        - 1 clic : Analyser Screenshot<br>
+        - Coller lien : Analyser Vidéo/Web
     </div>
 
-    <input type="password" id="apiKey" placeholder="Clé API Gemini..." style="font-size: 10px; opacity: 0.5;">
-    
-    <!-- Input invisible pour charger le screenshot -->
+    <input type="password" id="apiKey" placeholder="Colle ta clé API Gemini ici..." style="font-size: 11px; margin-top: 20px; border-color: #444;">
     <input type="file" id="fileInput" accept="image/*" style="display:none">
 </div>
 
@@ -87,27 +57,15 @@
     const fileInput = document.getElementById('fileInput');
     const miniLoader = document.getElementById('mini-loader');
     const icon = document.getElementById('icon');
-    let clickTimer = null;
+    const apiKeyInput = document.getElementById('apiKey');
 
-    // Gestion du clic (Analyse Écran)
+    function togglePanel() { panel.style.display = (panel.style.display === 'block') ? 'none' : 'block'; }
+
     function handleClick() {
-        if (clickTimer !== null) return; // Évite de déclencher si c'est un double clic
-        clickTimer = setTimeout(() => {
-            clickTimer = null;
-            fileInput.click(); // Ouvre la galerie pour prendre le dernier screenshot
-        }, 300);
-    }
-
-    // Gestion du double-clic (Liens Vidéo/Web)
-    function handleDoubleClick() {
-        clearTimeout(clickTimer);
-        clickTimer = null;
-        togglePanel();
-        document.getElementById('link-section').style.display = 'block';
-    }
-
-    function togglePanel() {
-        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+        // Si le panneau est fermé, on demande le screenshot
+        if(panel.style.display !== 'block') {
+            fileInput.click();
+        }
     }
 
     fileInput.onchange = async (e) => {
@@ -116,25 +74,29 @@
         const reader = new FileReader();
         reader.onload = async () => {
             const base64 = reader.result.split(',')[1];
-            processAI("Analyse ce screenshot : explique le contenu, traduis si c'est du chinois, et dis moi si c'est important.", base64);
+            processAI("Analyse ce screenshot : traduis le chinois, explique le produit et le prix.", base64);
         };
         reader.readAsDataURL(file);
     };
 
     async function analyzeUrl() {
         const url = document.getElementById('urlInput').value;
-        if (!url) return;
-        processAI(`Analyse ce lien (vidéo ou site) : ${url}. Explique moi le contenu comme un assistant intelligent.`);
+        if (!url) { alert("Veuillez coller un lien"); return; }
+        processAI(`Analyse ce lien : ${url}. Explique-moi ce que c'est et ce qu'il faut retenir.`);
     }
 
     async function processAI(prompt, image = null) {
-        const key = document.getElementById('apiKey').value;
-        if (!key) { alert("Ajoute ta clé API"); return; }
+        const key = apiKeyInput.value.trim();
+        if (!key) { 
+            togglePanel();
+            resultDiv.innerHTML = "<span style='color:red'>ERREUR : La clé API est vide en bas du panneau !</span>";
+            return; 
+        }
 
         panel.style.display = 'block';
         miniLoader.style.display = 'block';
         icon.style.display = 'none';
-        resultDiv.innerHTML = "Jarvis réfléchit...";
+        resultDiv.innerHTML = "Jarvis analyse les données...";
 
         const payload = {
             contents: [{ parts: [{ text: prompt }] }]
@@ -149,23 +111,27 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const data = await resp.json();
-            const text = data.candidates[0].content.parts[0].text;
             
+            const data = await resp.json();
+
+            // VERIFICATION D'ERREUR DE LA CLÉ
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+
+            if (!data.candidates || !data.candidates[0]) {
+                throw new Error("L'IA n'a pas renvoyé de réponse. Vérifiez votre contenu.");
+            }
+
+            const text = data.candidates[0].content.parts[0].text;
             resultDiv.innerHTML = "<strong>JARVIS :</strong><br>" + text.replace(/\n/g, '<br>');
-            speak(text.substring(0, 200)); // Jarvis parle
+            
         } catch (e) {
-            resultDiv.innerHTML = "Erreur : " + e.message;
+            resultDiv.innerHTML = "<span style='color:red'>ERREUR JARVIS : " + e.message + "</span>";
         } finally {
             miniLoader.style.display = 'none';
             icon.style.display = 'block';
         }
-    }
-
-    function speak(text) {
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'fr-FR';
-        window.speechSynthesis.speak(msg);
     }
 </script>
 </body>
