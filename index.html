@@ -3,54 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS GROQ V10</title>
+    <title>JARVIS V11</title>
     <style>
-        :root { --neon: #00ff41; } /* Vert Matrix/Groq */
-        body { margin: 0; background: #000; color: white; font-family: 'Courier New', monospace; text-align: center; }
+        :root { --glow: #00ff41; }
+        body { margin: 0; background: #000; color: white; font-family: monospace; text-align: center; }
         #jarvis-btn {
-            width: 80px; height: 80px; border: 2px solid var(--neon); border-radius: 50%;
+            width: 80px; height: 80px; border: 2px solid var(--glow); border-radius: 50%;
             margin: 30px auto; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px var(--neon); background: #050505; cursor: pointer;
+            box-shadow: 0 0 20px var(--glow); cursor: pointer; background: #050505;
         }
-        #panel { padding: 20px; border: 1px solid var(--neon); margin: 15px; border-radius: 10px; background: #0a0a0a; }
-        button { width: 100%; padding: 15px; background: var(--neon); color: #000; font-weight: bold; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
-        #log { margin-top: 20px; padding: 15px; text-align: left; font-size: 13px; border-left: 3px solid var(--neon); background: #000; min-height: 50px; }
-        input { width: 100%; padding: 10px; margin-top: 10px; background: #111; color: var(--neon); border: 1px solid var(--neon); border-radius: 5px; box-sizing: border-box; }
+        #panel { padding: 20px; border: 1px solid var(--glow); margin: 15px; border-radius: 10px; background: #0a0a0a; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
+        input { background: #111; color: var(--glow); border: 1px solid var(--glow); }
+        button { background: var(--glow); color: #000; font-weight: bold; cursor: pointer; }
+        #log { margin-top: 20px; padding: 15px; text-align: left; font-size: 13px; border-left: 3px solid var(--glow); min-height: 50px; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--neon); margin-top: 20px;">JARVIS-GROQ V10</h2>
-    <p style="font-size: 10px;">SYSTÈME SANS FACTURATION - LLAMA 3.2 VISION</p>
+    <h2 style="color:var(--glow); margin-top: 20px;">JARVIS-GROQ V11</h2>
+    <p style="font-size: 10px;">MISE À JOUR MODÈLE : LLAMA 3.2 90B VISION</p>
 
     <div id="jarvis-btn" onclick="document.getElementById('fileInput').click()">
-        <b style="color:var(--neon)">SCAN</b>
+        <b style="color:var(--glow)">SCAN</b>
     </div>
 
     <div id="panel">
-        <button onclick="runGroq('link')">ANALYSER LE LIEN CI-DESSOUS</button>
-        <input type="text" id="linkInput" placeholder="Coller lien ici...">
+        <input type="text" id="linkInput" placeholder="Coller un lien ici...">
+        <button onclick="runJarvis('link')">ANALYSER LE LIEN</button>
         
-        <div id="log">En attente de signal...</div>
+        <div id="log">SYSTÈME PRÊT</div>
 
-        <p style="font-size: 10px; color: #555; margin-top: 20px;">CLÉ API GROQ (gsk_...) :</p>
-        <input type="password" id="apiKey" placeholder="Coller clé gsk_ ici..." onchange="localStorage.setItem('groq_key', this.value)">
-        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="runGroq('image')">
+        <p style="font-size: 10px; color: #444; margin-top: 20px;">CLÉ API GROQ :</p>
+        <input type="password" id="apiKey" placeholder="gsk_..." onchange="localStorage.setItem('v11_key', this.value)">
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="runJarvis('image')">
     </div>
 
 <script>
-    // Charger la clé au démarrage
     window.onload = () => {
-        const saved = localStorage.getItem('groq_key');
+        const saved = localStorage.getItem('v11_key');
         if(saved) document.getElementById('apiKey').value = saved;
     }
 
-    async function runGroq(mode) {
+    async function runJarvis(mode) {
         const key = document.getElementById('apiKey').value.trim();
         const log = document.getElementById('log');
-        if(!key) { alert("ERREUR : Manque la clé GROQ !"); return; }
+        if(!key) { alert("ERREUR : Manque la clé !"); return; }
 
-        log.innerHTML = "<span style='color:var(--neon)'>Jarvis (Groq) réfléchit...</span>";
+        log.innerHTML = "<span style='color:var(--glow)'>Jarvis analyse...</span>";
 
         const url = "https://api.groq.com/openai/v1/chat/completions";
         let messages = [];
@@ -65,7 +65,7 @@
             messages = [{
                 role: "user",
                 content: [
-                    { type: "text", text: "Agis comme Jarvis. Analyse ce screenshot, traduis le chinois en français et explique tout précisément (prix, produit, fiabilité)." },
+                    { type: "text", text: "Agis comme Jarvis. Analyse ce screenshot. Traduis le chinois en français. Explique précisément le produit, le prix et la fiabilité." },
                     { type: "image_url", image_url: { url: base64 } }
                 ]
             }];
@@ -74,19 +74,17 @@
             if(!link) return;
             messages = [{
                 role: "user",
-                content: "Agis comme Jarvis. Analyse ce lien et explique moi le contenu en français : " + link
+                content: "Agis comme Jarvis. Résume ce lien en français et explique ce qu'il contient : " + link
             }];
         }
 
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${key}`,
-                    'Content-Type': 'application/json' 
-                },
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: "llama-3.2-11b-vision-preview",
+                    // MODÈLE MIS À JOUR ICI
+                    model: "llama-3.2-90b-vision-preview",
                     messages: messages,
                     temperature: 0.5
                 })
@@ -94,17 +92,17 @@
 
             const data = await response.json();
             if(data.error) {
-                log.innerHTML = "<b style='color:red'>ERREUR GROQ :</b> " + data.error.message;
+                log.innerHTML = "<b style='color:red'>ERREUR :</b> " + data.error.message;
             } else {
-                const answer = data.choices[0].message.content;
-                log.innerHTML = "<b>JARVIS :</b><br><br>" + answer.replace(/\n/g, "<br>");
-                // Voix
-                const speech = new SpeechSynthesisUtterance(answer.substring(0, 200));
+                const text = data.choices[0].message.content;
+                log.innerHTML = "<b>JARVIS :</b><br><br>" + text.replace(/\n/g, "<br>");
+                // Voix Jarvis
+                const speech = new SpeechSynthesisUtterance(text.substring(0, 200));
                 speech.lang = 'fr-FR';
                 window.speechSynthesis.speak(speech);
             }
         } catch (e) {
-            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU :</b> " + e.message;
+            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU</b>";
         }
     }
 </script>
