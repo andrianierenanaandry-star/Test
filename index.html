@@ -3,120 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jarvis Vision v4</title>
+    <title>JARVIS V5</title>
     <style>
-        :root { --neon: #00fbff; --dark: #050505; }
-        body { margin: 0; background: #000; color: white; font-family: sans-serif; }
+        :root { --neon: #00fbff; }
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; text-align: center; }
         #jarvis-btn {
-            width: 70px; height: 70px; border: 2px solid var(--neon); border-radius: 50%;
-            position: fixed; top: 20px; left: 20px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px var(--neon); background: var(--dark); z-index: 1000;
+            width: 80px; height: 80px; border: 3px solid var(--neon); border-radius: 50%;
+            margin: 20px auto; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px var(--neon); background: #111; cursor: pointer;
         }
-        #panel {
-            padding: 20px; margin-top: 100px; background: #111; border: 1px solid var(--neon);
-            margin: 100px 15px 20px 15px; border-radius: 15px; box-shadow: 0 0 10px rgba(0,251,255,0.2);
-        }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; box-sizing: border-box; font-size: 14px; }
+        #panel { padding: 20px; background: #111; border: 1px solid var(--neon); margin: 15px; border-radius: 15px; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; box-sizing: border-box; }
         input { background: #222; color: white; border: 1px solid #333; }
-        button { background: var(--neon); font-weight: bold; cursor: pointer; color: #000; }
-        #log { 
-            margin-top: 20px; padding: 15px; background: #000; border-radius: 8px; 
-            font-size: 13px; border-left: 3px solid var(--neon); min-height: 50px;
-        }
-        .loader { width: 20px; height: 20px; border: 2px solid white; border-top: 2px solid var(--neon); border-radius: 50%; animation: spin 1s linear infinite; display: none; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        button { background: var(--neon); font-weight: bold; cursor: pointer; }
+        #log { margin-top: 20px; padding: 15px; background: #000; border-radius: 8px; border-left: 4px solid var(--neon); text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div id="jarvis-btn" onclick="document.getElementById('fileInput').click()">
-    <span id="label" style="color:var(--neon); font-weight:bold; font-size:12px;">SCAN</span>
-    <div id="loader" class="loader"></div>
-</div>
+    <p style="color:var(--neon); font-size: 10px; margin-top: 10px;">SYSTÈME JARVIS - VERSION 5 ACTIVE</p>
 
-<div id="panel">
-    <h3 style="color:var(--neon); margin-top:0; letter-spacing: 2px;">JARVIS INTELLIGENCE</h3>
-    
-    <input type="text" id="urlInput" placeholder="Coller un lien (Facebook, YouTube, Shop)...">
-    <button onclick="runJarvis('link')">ANALYSER LE LIEN</button>
-    
-    <div id="log">SYSTÈME PRÊT. Cliquez sur le cercle bleu pour scanner un screenshot ou collez un lien.</div>
+    <div id="jarvis-btn" onclick="document.getElementById('fileInput').click()">
+        <span style="color:var(--neon); font-weight:bold;">SCAN</span>
+    </div>
 
-    <p style="font-size: 10px; color: #555; margin-top: 30px;">CONFIGURATION CLÉ API :</p>
-    <input type="password" id="apiKey" placeholder="Clé AIzaSy..." onchange="saveKey()">
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="runJarvis('image')">
-</div>
+    <div id="panel">
+        <input type="text" id="urlInput" placeholder="Coller un lien ici...">
+        <button onclick="startAI('link')">ANALYSER LE LIEN</button>
+        
+        <div id="log">En attente...</div>
+
+        <input type="password" id="apiKey" placeholder="Clé API AIza..." onchange="localStorage.setItem('j_key', this.value)">
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="startAI('image')">
+    </div>
 
 <script>
-    const log = document.getElementById('log');
-    const loader = document.getElementById('loader');
-    const label = document.getElementById('label');
-
-    function saveKey() { localStorage.setItem('jarvis_key', document.getElementById('apiKey').value.trim()); }
     window.onload = () => {
-        const saved = localStorage.getItem('jarvis_key');
+        const saved = localStorage.getItem('j_key');
         if(saved) document.getElementById('apiKey').value = saved;
     }
 
-    async function runJarvis(type) {
+    async function startAI(type) {
         const key = document.getElementById('apiKey').value.trim();
-        if(!key) { log.innerHTML = "<b style='color:red'>ERREUR : Manque la clé API en bas !</b>"; return; }
+        const log = document.getElementById('log');
+        if(!key) { alert("Mets ta clé API !"); return; }
 
-        log.innerHTML = "<i>Jarvis réfléchit...</i>";
-        loader.style.display = "block";
-        label.style.display = "none";
+        log.innerHTML = "Jarvis réfléchit...";
 
-        // --- CORRECTION ICI : Utilisation de v1 et gemini-1.5-flash ---
-        const urlAPI = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+        // ON FORCE LA VERSION 1 STABLE ET LE MODELE SANS BETA
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-        let payload = { contents: [{ parts: [] }] };
+        let prompt = (type === 'link') ? 
+            "Analyse ce lien et explique moi tout : " + document.getElementById('urlInput').value :
+            "Traduis et explique cet écran précisément.";
 
-        if(type === 'link') {
-            const link = document.getElementById('urlInput').value;
-            if(!link) { alert("Colle un lien d'abord !"); return; }
-            payload.contents[0].parts.push({ text: "Agis comme Jarvis. Analyse ce lien et explique moi tout : " + link });
-        } else {
+        let body = { contents: [{ parts: [{ text: prompt }] }] };
+
+        if(type === 'image') {
             const file = document.getElementById('fileInput').files[0];
-            if(!file) return;
-            const base64 = await toBase64(file);
-            payload.contents[0].parts.push({ text: "Agis comme Jarvis. Traduis cet écran s'il est en chinois et explique moi précisément le produit, le prix et les détails." });
-            payload.contents[0].parts.push({ inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } });
+            const base64 = await new Promise(r => {
+                const rd = new FileReader();
+                rd.onload = () => r(rd.result.split(',')[1]);
+                rd.readAsDataURL(file);
+            });
+            body.contents[0].parts.push({ inline_data: { mime_type: "image/jpeg", data: base64 } });
         }
 
         try {
-            const response = await fetch(urlAPI, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(body)
             });
 
             const data = await response.json();
-
-            if (!response.ok) {
-                log.innerHTML = `<b style='color:red'>ERREUR :</b> ${data.error ? data.error.message : 'Problème de connexion'}`;
+            if (data.error) {
+                log.innerHTML = "<b style='color:red'>ERREUR GOOGLE :</b> " + data.error.message;
             } else {
-                const answer = data.candidates[0].content.parts[0].text;
-                log.innerHTML = "<b>ANALYSE JARVIS :</b><br><br>" + answer.replace(/\n/g, "<br>");
-                
-                // Jarvis parle (optionnel)
-                const speech = new SpeechSynthesisUtterance(answer.substring(0, 200));
-                speech.lang = 'fr-FR';
-                window.speechSynthesis.speak(speech);
+                log.innerHTML = "<b>JARVIS :</b><br><br>" + data.candidates[0].content.parts[0].text.replace(/\n/g, "<br>");
             }
         } catch (e) {
-            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU :</b> " + e.message;
-        } finally {
-            loader.style.display = "none";
-            label.style.display = "block";
+            log.innerHTML = "Erreur de connexion.";
         }
     }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
 </script>
 </body>
 </html>
