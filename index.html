@@ -3,170 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mini Overlay</title>
+    <title>Jarvis Widget</title>
     <style>
+        :root { --neon: #00fbff; --dark: #0a0a0a; }
         body {
-            font-family: sans-serif;
-            margin: 0;
-            background: #111;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            margin: 0; padding: 0; background: transparent;
+            font-family: 'Segoe UI', sans-serif; overflow: hidden;
         }
 
-        /* Barre de contrôle compacte */
-        .toolbar {
-            display: flex;
-            gap: 5px;
-            padding: 5px;
-            background: #222;
-            border-bottom: 1px solid #444;
+        /* Le Widget Circulaire */
+        #jarvis-circle {
+            width: 60px; height: 60px;
+            background: var(--dark);
+            border: 2px solid var(--neon);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px var(--neon);
+            cursor: pointer; position: fixed; top: 10px; left: 10px;
+            z-index: 1000; transition: 0.3s;
         }
 
-        button {
-            flex: 1;
-            padding: 10px 5px;
-            font-size: 11px;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
+        #jarvis-circle:active { transform: scale(0.9); }
+
+        /* Le Panneau d'Analyse (caché par défaut) */
+        #panel {
+            display: none; width: 95vw; max-height: 80vh;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--neon);
+            border-radius: 15px; position: fixed; top: 80px; left: 2.5vw;
+            color: white; padding: 15px; box-sizing: border-box;
+            overflow-y: auto; z-index: 999;
         }
 
-        .btn-green { background: #2e7d32; color: white; }
-        .btn-blue { background: #1565c0; color: white; }
-        .btn-red { background: #c62828; color: white; }
-
-        #api-config {
-            padding: 5px;
-            background: #333;
+        .loader {
+            width: 20px; height: 20px; border: 2px solid var(--neon);
+            border-top: 2px solid transparent; border-radius: 50%;
+            animation: spin 1s linear infinite; display: none;
         }
 
-        input {
-            width: 90%;
-            padding: 5px;
-            font-size: 10px;
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        input { 
+            width: 100%; background: #222; border: 1px solid var(--neon); 
+            color: white; padding: 10px; margin-top: 10px; border-radius: 5px;
         }
 
-        /* Zone de résultat optimisée */
-        #results {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 13px;
-            line-height: 1.4;
-            background: #000;
-        }
-
-        .translation-block {
-            border-left: 3px solid #1565c0;
-            padding-left: 8px;
-            margin-bottom: 15px;
-        }
-
-        .status {
-            font-size: 10px;
-            color: #aaa;
-            text-align: center;
-        }
-
-        video, canvas { display: none; }
+        #result { font-size: 13px; line-height: 1.4; margin-top: 10px; }
+        .close-btn { color: var(--neon); float: right; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="api-config">
-    <input type="password" id="apiKey" placeholder="Clé Gemini API...">
+<!-- La Bulle Jarvis -->
+<div id="jarvis-circle" onclick="handleClick()" ondblclick="handleDoubleClick()">
+    <span id="icon" style="color: var(--neon); font-weight: bold; font-size: 10px; text-align: center;">JARVIS</span>
+    <div id="mini-loader" class="loader"></div>
 </div>
 
-<div class="toolbar">
-    <button class="btn-green" id="startBtn">1. Partager</button>
-    <button class="btn-blue" id="analyzeBtn" disabled>2. Analyser</button>
-    <button class="btn-red" id="autoBtn" disabled>Auto: OFF</button>
+<!-- Le Panneau de contrôle -->
+<div id="panel">
+    <span class="close-btn" onclick="togglePanel()">X</span>
+    <div id="status" style="color: var(--neon); font-size: 12px;">SYSTÈME EN ATTENTE</div>
+    
+    <div id="link-section" style="display:none;">
+        <input type="text" id="urlInput" placeholder="Coller lien vidéo ou web ici...">
+        <button onclick="analyzeUrl()" style="width:100%; margin-top:5px; background:var(--neon); border:none; padding:8px; font-weight:bold;">ANALYSER LIEN</button>
+    </div>
+
+    <div id="result">
+        Appuie 1x pour analyser l'écran (Screenshot).<br>
+        Appuie 2x pour analyser un lien.
+    </div>
+
+    <input type="password" id="apiKey" placeholder="Clé API Gemini..." style="font-size: 10px; opacity: 0.5;">
+    
+    <!-- Input invisible pour charger le screenshot -->
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
 </div>
-
-<div id="status" class="status">Prêt</div>
-
-<div id="results">
-    <em>Le résultat apparaîtra ici. Utilisez le mode écran scindé avec votre app de vente.</em>
-</div>
-
-<video id="video" autoplay muted playsinline></video>
-<canvas id="canvas"></canvas>
 
 <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const startBtn = document.getElementById('startBtn');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const autoBtn = document.getElementById('autoBtn');
-    const resultsDiv = document.getElementById('results');
-    const statusDiv = document.getElementById('status');
-    const apiKeyInput = document.getElementById('apiKey');
+    const panel = document.getElementById('panel');
+    const resultDiv = document.getElementById('result');
+    const fileInput = document.getElementById('fileInput');
+    const miniLoader = document.getElementById('mini-loader');
+    const icon = document.getElementById('icon');
+    let clickTimer = null;
 
-    let isAuto = false;
-    let autoInterval = null;
+    // Gestion du clic (Analyse Écran)
+    function handleClick() {
+        if (clickTimer !== null) return; // Évite de déclencher si c'est un double clic
+        clickTimer = setTimeout(() => {
+            clickTimer = null;
+            fileInput.click(); // Ouvre la galerie pour prendre le dernier screenshot
+        }, 300);
+    }
 
-    startBtn.onclick = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            video.srcObject = stream;
-            analyzeBtn.disabled = false;
-            autoBtn.disabled = false;
-            statusDiv.innerText = "Écran capturé";
-        } catch (err) { alert("Erreur: " + err); }
+    // Gestion du double-clic (Liens Vidéo/Web)
+    function handleDoubleClick() {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        togglePanel();
+        document.getElementById('link-section').style.display = 'block';
+    }
+
+    function togglePanel() {
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    }
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64 = reader.result.split(',')[1];
+            processAI("Analyse ce screenshot : explique le contenu, traduis si c'est du chinois, et dis moi si c'est important.", base64);
+        };
+        reader.readAsDataURL(file);
     };
 
-    async function process() {
-        const key = apiKeyInput.value;
-        if (!key) return alert("Manque clé API");
+    async function analyzeUrl() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return;
+        processAI(`Analyse ce lien (vidéo ou site) : ${url}. Explique moi le contenu comme un assistant intelligent.`);
+    }
 
-        statusDiv.innerText = "Analyse en cours...";
-        
-        // Capture image
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        const base64Image = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+    async function processAI(prompt, image = null) {
+        const key = document.getElementById('apiKey').value;
+        if (!key) { alert("Ajoute ta clé API"); return; }
+
+        panel.style.display = 'block';
+        miniLoader.style.display = 'block';
+        icon.style.display = 'none';
+        resultDiv.innerHTML = "Jarvis réfléchit...";
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }]
+        };
+        if (image) {
+            payload.contents[0].parts.push({ inline_data: { mime_type: "image/jpeg", data: image } });
+        }
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: "Traduis en français tout le texte chinois visible sur cette image de boutique. Explique le produit et le prix." },
-                            { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                        ]
-                    }]
-                })
+                body: JSON.stringify(payload)
             });
-
-            const data = await response.json();
+            const data = await resp.json();
             const text = data.candidates[0].content.parts[0].text;
             
-            resultsDiv.innerHTML = `<div class="translation-block"><strong>Mise à jour ${new Date().toLocaleTimeString()} :</strong><br>${text.replace(/\n/g, '<br>')}</div>` + resultsDiv.innerHTML;
-            statusDiv.innerText = "Terminé";
+            resultDiv.innerHTML = "<strong>JARVIS :</strong><br>" + text.replace(/\n/g, '<br>');
+            speak(text.substring(0, 200)); // Jarvis parle
         } catch (e) {
-            statusDiv.innerText = "Erreur IA";
+            resultDiv.innerHTML = "Erreur : " + e.message;
+        } finally {
+            miniLoader.style.display = 'none';
+            icon.style.display = 'block';
         }
     }
 
-    analyzeBtn.onclick = process;
-
-    autoBtn.onclick = () => {
-        isAuto = !isAuto;
-        autoBtn.innerText = isAuto ? "Auto: ON" : "Auto: OFF";
-        autoBtn.style.background = isAuto ? "#e67e22" : "#c62828";
-
-        if (isAuto) {
-            autoInterval = setInterval(process, 15000); // Analyse toutes les 15 secondes
-        } else {
-            clearInterval(autoInterval);
-        }
-    };
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'fr-FR';
+        window.speechSynthesis.speak(msg);
+    }
 </script>
 </body>
 </html>
