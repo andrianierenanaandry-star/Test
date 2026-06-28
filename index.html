@@ -3,97 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS V13</title>
+    <title>JARVIS V14 - MISTRAL</title>
     <style>
-        :root { --jarvis: #00ffff; }
+        :root { --jarvis: #ff5e00; } /* Orange Mistral */
         body { margin: 0; background: #000; color: white; font-family: sans-serif; text-align: center; }
         #btn-main {
             width: 100px; height: 100px; border: 3px solid var(--jarvis); border-radius: 50%;
             margin: 40px auto; display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 25px var(--jarvis); cursor: pointer; background: #050505;
         }
-        #panel { padding: 20px; border: 1px solid var(--jarvis); margin: 15px; border-radius: 20px; background: #0a0a0a; box-shadow: inset 0 0 10px var(--jarvis); }
+        #panel { padding: 20px; border: 1px solid var(--jarvis); margin: 15px; border-radius: 20px; background: #0a0a0a; }
         input, button { width: 100%; padding: 15px; margin-top: 10px; border-radius: 10px; border: none; box-sizing: border-box; font-size: 16px; }
         input { background: #111; color: white; border: 1px solid #333; }
-        button { background: var(--jarvis); color: black; font-weight: bold; cursor: pointer; }
+        button { background: var(--jarvis); color: white; font-weight: bold; cursor: pointer; }
         #log { margin-top: 20px; padding: 15px; text-align: left; font-size: 14px; border-left: 4px solid var(--jarvis); background: #000; min-height: 80px; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--jarvis); margin-top: 20px; letter-spacing: 2px;">JARVIS V13</h2>
-    <p style="font-size: 12px; opacity: 0.7;">SYSTÈME STABILISÉ - GEMINI 1.5 FLASH</p>
+    <h2 style="color:var(--jarvis); margin-top: 20px;">JARVIS V14 (MISTRAL)</h2>
+    <p style="font-size: 11px; opacity: 0.7;">SOLUTION DE SECOURS - PIXTRAL 12B</p>
 
     <div id="btn-main" onclick="document.getElementById('fileInput').click()">
         <b style="color:var(--jarvis); font-size: 20px;">SCAN</b>
     </div>
 
     <div id="panel">
-        <input type="text" id="urlInput" placeholder="Lien Facebook, Shop, YouTube...">
-        <button onclick="askAI('link')">ANALYSER LE LIEN</button>
+        <input type="text" id="urlInput" placeholder="Coller lien ici...">
+        <button onclick="askJarvis('link')">ANALYSER LE LIEN</button>
         
-        <div id="log">SYSTÈME PRÊT. En attente d'un screenshot ou d'un lien.</div>
+        <div id="log">SYSTÈME PRÊT. Utilisez une clé MISTRAL AI.</div>
 
-        <p style="font-size: 11px; color: #555; margin-top: 30px;">CLÉ API GEMINI (AIzaSy...) :</p>
-        <input type="password" id="apiKey" placeholder="Coller ta clé ici..." onchange="localStorage.setItem('v13_key', this.value)">
-        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="askAI('image')">
+        <p style="font-size: 11px; color: #555; margin-top: 30px;">CLÉ API MISTRAL :</p>
+        <input type="password" id="apiKey" placeholder="Coller clé Mistral ici..." onchange="localStorage.setItem('v14_key', this.value)">
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="askJarvis('image')">
     </div>
 
 <script>
-    // Chargement automatique de la clé
     window.onload = () => {
-        const saved = localStorage.getItem('v13_key');
+        const saved = localStorage.getItem('v14_key');
         if(saved) document.getElementById('apiKey').value = saved;
     }
 
-    async function askAI(mode) {
+    async function askJarvis(mode) {
         const key = document.getElementById('apiKey').value.trim();
         const log = document.getElementById('log');
-        if(!key) { alert("ERREUR : Copie ta clé API Gemini (AIza...) en bas !"); return; }
+        if(!key) { alert("ERREUR : Collez votre clé Mistral !"); return; }
 
-        log.innerHTML = "<span style='color:var(--jarvis)'>JARVIS RÉFLÉCHIT...</span>";
+        log.innerHTML = "JARVIS ANALYSE VIA MISTRAL AI...";
 
-        // URL ULTRA-STABLE (v1beta avec gemini-1.5-flash)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        const url = "https://api.mistral.ai/v1/chat/completions";
+        let body = {
+            model: "pixtral-12b-latest",
+            messages: []
+        };
 
-        let prompt = "Agis comme Jarvis. Analyse ceci et explique en français. Traduis si c'est du chinois. Sois précis sur les prix et la fiabilité.";
-        let payload = { contents: [{ parts: [] }] };
+        let prompt = "Agis comme Jarvis. Analyse ceci et explique en français. Traduis le chinois si présent. Sois précis sur les prix et la fiabilité.";
 
         if(mode === 'image') {
             const file = document.getElementById('fileInput').files[0];
             const base64 = await new Promise(r => {
-                const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(file);
+                const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(file);
             });
-            payload.contents[0].parts.push({ text: prompt });
-            payload.contents[0].parts.push({ inline_data: { mime_type: "image/jpeg", data: base64 } });
+            body.messages.push({
+                role: "user",
+                content: [
+                    { type: "text", text: prompt },
+                    { type: "image_url", image_url: base64 }
+                ]
+            });
         } else {
             const link = document.getElementById('urlInput').value;
-            if(!link) { log.innerHTML = "Erreur : Champ vide."; return; }
-            payload.contents[0].parts.push({ text: prompt + " Voici le lien : " + link });
+            body.messages.push({
+                role: "user",
+                content: prompt + " Voici le lien : " + link
+            });
         }
 
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                headers: { 
+                    'Authorization': `Bearer ${key}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(body)
             });
 
             const data = await response.json();
-
             if(data.error) {
                 log.innerHTML = "<b style='color:red'>ERREUR :</b> " + data.error.message;
             } else {
-                const result = data.candidates[0].content.parts[0].text;
+                const result = data.choices[0].message.content;
                 log.innerHTML = "<b>JARVIS :</b><br><br>" + result.replace(/\n/g, "<br>");
-                
-                // Voix Jarvis
-                const speech = new SpeechSynthesisUtterance(result.substring(0, 250));
+                const speech = new SpeechSynthesisUtterance(result.substring(0, 200));
                 speech.lang = 'fr-FR';
                 window.speechSynthesis.speak(speech);
             }
         } catch (e) {
-            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU :</b> Vérifiez votre connexion ou votre clé.";
+            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU</b>";
         }
     }
 </script>
