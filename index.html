@@ -3,97 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS V7</title>
+    <title>JARVIS V8 - EMERALD</title>
     <style>
-        :root { --mauve: #bc13fe; } 
+        :root { --emerald: #50c878; } 
         body { margin: 0; background: #000; color: white; font-family: sans-serif; text-align: center; }
         #jarvis-btn {
-            width: 80px; height: 80px; border: 4px solid var(--mauve); border-radius: 50%;
+            width: 80px; height: 80px; border: 4px solid var(--emerald); border-radius: 50%;
             margin: 30px auto; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 30px var(--mauve); background: #111; cursor: pointer;
+            box-shadow: 0 0 30px var(--emerald); background: #111; cursor: pointer;
         }
-        #panel { padding: 20px; background: #111; border: 2px solid var(--mauve); margin: 15px; border-radius: 15px; }
-        button { width: 100%; padding: 15px; margin-top: 10px; border-radius: 8px; border: none; background: var(--mauve); font-weight: bold; color: white; }
-        #log { margin-top: 20px; padding: 15px; background: #000; border-radius: 8px; border-left: 4px solid var(--mauve); text-align: left; min-height: 50px; font-size: 13px; }
+        #panel { padding: 20px; background: #111; border: 2px solid var(--emerald); margin: 15px; border-radius: 15px; }
+        button { width: 100%; padding: 15px; margin-top: 10px; border-radius: 8px; border: none; background: var(--emerald); font-weight: bold; color: black; }
+        #log { margin-top: 20px; padding: 15px; background: #000; border-radius: 8px; border-left: 4px solid var(--emerald); text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:var(--mauve); margin-top: 20px;">SYSTEM JARVIS V7</h2>
-    <p style="font-size: 10px;">MODE : COMPATIBILITÉ MAXIMALE (V1BETA)</p>
+    <h2 style="color:var(--emerald); margin-top: 20px;">SYSTEM JARVIS V8</h2>
+    <p style="font-size: 10px;">MODE : RECHERCHE DE MODÈLE COMPATIBLE...</p>
 
     <div id="jarvis-btn" onclick="document.getElementById('fileInput').click()">
-        <b style="color:var(--mauve)">SCAN</b>
+        <b style="color:var(--emerald)">SCAN</b>
     </div>
 
     <div id="panel">
-        <input type="text" id="urlInput" placeholder="Lien ici..." style="width:100%; padding:12px; border-radius:5px; background:#222; color:white; border:1px solid #444;">
-        <button onclick="askJarvis('link')">ANALYSER LE LIEN</button>
+        <input type="text" id="urlInput" placeholder="Lien à analyser..." style="width:100%; padding:12px; border-radius:5px; background:#222; color:white; border:1px solid #444;">
+        <button onclick="runDiagnostic()">LANCER JARVIS</button>
         
-        <div id="log">En attente d'instruction...</div>
+        <div id="log">En attente de démarrage...</div>
 
         <p style="font-size: 10px; color: #555; margin-top: 20px;">CLÉ API :</p>
-        <input type="password" id="apiKey" placeholder="AIzaSy..." style="width:100%; padding:10px; background:#222; color:white; border:1px solid #444;" onchange="localStorage.setItem('v7_key', this.value)">
-        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="askJarvis('image')">
+        <input type="password" id="apiKey" placeholder="AIzaSy..." style="width:100%; padding:10px; background:#222; color:white; border:1px solid #444;" onchange="localStorage.setItem('v8_key', this.value)">
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="runDiagnostic('image')">
     </div>
 
 <script>
     window.onload = () => {
-        const saved = localStorage.getItem('v7_key');
+        const saved = localStorage.getItem('v8_key');
         if(saved) document.getElementById('apiKey').value = saved;
     }
 
-    async function askJarvis(type) {
+    async function runDiagnostic(mode = 'link') {
         const key = document.getElementById('apiKey').value.trim();
         const log = document.getElementById('log');
-        if(!key) { alert("ERREUR : Colle ta clé API !"); return; }
+        if(!key) { alert("ERREUR : Pas de clé !"); return; }
 
-        log.innerHTML = "<span style='color:var(--mauve)'>Jarvis analyse (v1beta)...</span>";
+        // LISTE DES MODÈLES À TESTER
+        const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
+        let success = false;
 
-        // URL EN MODE v1beta (plus flexible)
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        log.innerHTML = "Initialisation du protocole de recherche...";
 
-        let promptText = "Agis comme Jarvis. Analyse cet écran ou ce lien en français. Sois précis et utile.";
+        for (let modelName of models) {
+            if (success) break;
+            log.innerHTML = `Essai avec le modèle : <b>${modelName}</b>...`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Dis 'Bonjour Jarvis'" }] }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.error) {
+                    log.innerHTML = `<span style='color:var(--emerald)'>Modèle ${modelName} activé avec succès !</span><br>Lancement de l'analyse...`;
+                    success = true;
+                    // Lancer la vraie analyse maintenant qu'on a trouvé le bon modèle
+                    executeRealAnalysis(modelName, key, mode);
+                }
+            } catch (e) {
+                console.log(modelName + " a échoué.");
+            }
+        }
+
+        if (!success) {
+            log.innerHTML = "<b style='color:red'>ÉCHEC CRITIQUE :</b> Aucun modèle n'est accepté par ta clé API. Vérifie que tu as bien activé 'Gemini API' dans ton Google Cloud Console ou crée un nouveau compte Google.";
+        }
+    }
+
+    async function executeRealAnalysis(model, key, mode) {
+        const log = document.getElementById('log');
+        let prompt = "Agis comme Jarvis. Analyse ce lien ou cette image et explique tout en français.";
         let parts = [];
 
-        if(type === 'link') {
+        if (mode === 'link') {
             const link = document.getElementById('urlInput').value;
-            if(!link) { log.innerHTML = "Erreur : Colle un lien."; return; }
-            parts.push({ text: promptText + " Voici le lien : " + link });
+            parts.push({ text: prompt + " Lien : " + link });
         } else {
             const file = document.getElementById('fileInput').files[0];
-            if(!file) return;
-            log.innerHTML = "Traitement de l'image...";
             const base64 = await new Promise(r => {
-                const rd = new FileReader();
-                rd.onload = () => r(rd.result.split(',')[1]);
-                rd.readAsDataURL(file);
+                const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(file);
             });
-            parts.push({ text: promptText });
+            parts.push({ text: prompt });
             parts.push({ inline_data: { mime_type: "image/jpeg", data: base64 } });
         }
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
-
-            const data = await response.json();
-
-            if (data.error) {
-                log.innerHTML = "<b style='color:red'>ERREUR GOOGLE :</b><br>" + data.error.message;
-            } else if (data.candidates && data.candidates[0].content) {
-                const answer = data.candidates[0].content.parts[0].text;
-                log.innerHTML = "<b>JARVIS :</b><br><br>" + answer.replace(/\n/g, "<br>");
-            } else {
-                log.innerHTML = "<b style='color:orange'>RÉPONSE VIDE :</b> L'IA n'a pas pu analyser ce contenu.";
-            }
-        } catch (e) {
-            log.innerHTML = "<b style='color:red'>ERREUR RÉSEAU :</b> " + e.message;
-        }
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
+        const finalData = await resp.json();
+        log.innerHTML = "<b>JARVIS :</b><br><br>" + finalData.candidates[0].content.parts[0].text.replace(/\n/g, "<br>");
     }
 </script>
 </body>
-    </html>
+</html>
