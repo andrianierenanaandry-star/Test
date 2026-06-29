@@ -3,117 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS CHAT V17</title>
+    <title>JARVIS V18 - MISTRAL AI</title>
     <style>
-        :root { --jarvis: #00e5ff; --bg: #0b0f19; }
-        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        :root { --jarvis-color: #00f2ff; --bg-dark: #05070a; }
+        body { 
+            margin: 0; background-color: var(--bg-dark); color: #ffffff; 
+            font-family: 'Segoe UI', Roboto, sans-serif; display: flex; 
+            flex-direction: column; height: 100vh; overflow: hidden;
+        }
 
-        /* Header */
-        .header { padding: 15px; text-align: center; border-bottom: 1px solid rgba(0, 229, 255, 0.2); }
-        .header h1 { margin: 0; font-size: 18px; color: var(--jarvis); letter-spacing: 2px; }
+        /* Interface Chat Style Jarvis */
+        .header { padding: 15px; border-bottom: 2px solid var(--jarvis-color); text-align: center; box-shadow: 0 0 15px var(--jarvis-color); }
+        .header h2 { margin: 0; font-size: 18px; letter-spacing: 3px; color: var(--jarvis-color); }
 
-        /* Zone de Chat */
-        #chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .bubble { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
-        .user-bubble { align-self: flex-end; background: var(--jarvis); color: black; }
-        .ai-bubble { align-self: flex-start; background: #1a2235; border: 1px solid #2d3748; }
+        #chat-container { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .bubble { max-width: 85%; padding: 12px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+        .ai { align-self: flex-start; background: #1a1f26; border: 1px solid #30363d; border-bottom-left-radius: 2px; }
+        .user { align-self: flex-end; background: var(--jarvis-color); color: #000; font-weight: 500; border-bottom-right-radius: 2px; }
 
-        /* Menu Flottant (Choix) */
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
-        .option-btn { width: 80%; padding: 20px; background: #1a2235; border: 2px solid var(--jarvis); color: white; border-radius: 12px; font-weight: bold; text-align: center; cursor: pointer; }
+        /* Le Bouton Central de Scan */
+        .controls { padding: 20px; background: #0d1117; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        #jarvis-orb {
+            width: 70px; height: 70px; border: 3px solid var(--jarvis-color); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: #000; cursor: pointer; box-shadow: 0 0 20px var(--jarvis-color);
+            transition: transform 0.2s;
+        }
+        #jarvis-orb:active { transform: scale(0.9); }
+        #jarvis-orb div { width: 25px; height: 25px; background: var(--jarvis-color); border-radius: 50%; box-shadow: 0 0 10px var(--jarvis-color); }
 
-        /* Zone d'entrée */
-        .input-bar { padding: 15px; background: #161c2d; display: flex; align-items: center; gap: 10px; }
-        #jarvis-btn { width: 50px; height: 50px; border: 2px solid var(--jarvis); border-radius: 50%; background: black; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px var(--jarvis); flex-shrink: 0; }
-        #jarvis-btn div { width: 15px; height: 15px; background: var(--jarvis); border-radius: 50%; }
-        #text-input { flex-grow: 1; background: #0b0f19; border: 1px solid #2d3748; padding: 12px; border-radius: 20px; color: white; }
+        .loader { display: none; font-size: 12px; color: var(--jarvis-color); animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
 
-        #loader { display: none; text-align: center; color: var(--jarvis); font-size: 12px; padding: 5px; }
+        /* Configuration Clé API */
+        #config-area { font-size: 10px; padding: 5px; opacity: 0.4; }
+        input[type="password"] { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header"><h1>JARVIS V17</h1></div>
+<div class="header"><h2>JARVIS VISION</h2></div>
 
-    <div id="chat-box">
-        <div class="bubble ai-bubble">Monsieur, le système est prêt. Appuyez sur le bouton central pour scanner votre écran ou un lien.</div>
+<div id="chat-container">
+    <div class="bubble ai">Système prêt, Monsieur. Envoyez une capture d'écran d'une application chinoise, je m'occupe de la traduction et de l'analyse complète.</div>
+</div>
+
+<div id="loader" style="text-align: center; padding: 5px;">ANALYSE EN COURS...</div>
+
+<div class="controls">
+    <div id="jarvis-orb" onclick="openGallery()">
+        <div></div>
     </div>
+    <div style="font-size: 12px; color: var(--jarvis-color);">TAPOTEZ POUR SCANNER</div>
+</div>
 
-    <div id="loader">Jarvis analyse les données...</div>
+<div id="config-area">
+    Clé Mistral : <input type="password" id="apiKey" placeholder="Collez votre clé gsk_ ou mistral ici..." onchange="saveKey(this.value)">
+</div>
 
-    <!-- Menu de choix -->
-    <div id="overlay" onclick="closeMenu()">
-        <div class="option-btn" onclick="openGallery()">📷 ANALYSER L'ÉCRAN</div>
-        <div class="option-btn" onclick="askLink()">🔗 ANALYSER UN LIEN</div>
-        <div style="color: grey; font-size: 12px;">ANNULER</div>
-    </div>
-
-    <div class="input-bar">
-        <div id="jarvis-btn" onclick="openMenu()"><div></div></div>
-        <input type="text" id="text-input" placeholder="Posez une question...">
-        <button onclick="sendText()" style="background:none; border:none; color:var(--jarvis); font-weight:bold;">OK</button>
-    </div>
-
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="processImage(event)">
-
-    <!-- Zone Clé API (très discrète) -->
-    <input type="password" id="apiKey" placeholder="Clé Mistral" style="position:fixed; bottom:0; right:0; width:50px; opacity:0.1;" onchange="saveKey(this.value)">
+<!-- Input caché -->
+<input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
 
 <script>
-    const chatBox = document.getElementById('chat-box');
+    const chatContainer = document.getElementById('chat-container');
     const loader = document.getElementById('loader');
-    const overlay = document.getElementById('overlay');
+    const apiKeyInput = document.getElementById('apiKey');
 
-    // Sauvegarde et chargement de la clé
-    function saveKey(val) { localStorage.setItem('mistral_key', val.trim()); }
-    window.onload = () => { 
-        const k = localStorage.getItem('mistral_key'); 
-        if(k) document.getElementById('apiKey').value = k; 
+    // Sauvegarde automatique de la clé par défaut
+    function saveKey(val) {
+        localStorage.setItem('mistral_api_key', val.trim());
+    }
+
+    // Chargement de la clé enregistrée
+    window.onload = () => {
+        const savedKey = localStorage.getItem('mistral_api_key');
+        if (savedKey) apiKeyInput.value = savedKey;
     };
 
-    function openMenu() { overlay.style.display = 'flex'; }
-    function closeMenu() { overlay.style.display = 'none'; }
-
-    function openGallery() { document.getElementById('fileInput').click(); }
-
-    function askLink() {
-        const url = prompt("Veuillez coller le lien Facebook ou Web ici :");
-        if(url) runAI(url, false);
+    function openGallery() {
+        document.getElementById('fileInput').click();
     }
 
-    function addBubble(role, text) {
+    function addMessage(type, text) {
         const div = document.createElement('div');
-        div.className = `bubble ${role === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+        div.className = `bubble ${type}`;
         div.innerHTML = text.replace(/\n/g, '<br>');
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    function sendText() {
-        const txt = document.getElementById('text-input').value;
-        if(txt) {
-            document.getElementById('text-input').value = "";
-            runAI(txt, false);
+    async function handleFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const key = apiKeyInput.value || localStorage.getItem('mistral_api_key');
+        if (!key) {
+            alert("Monsieur, veuillez d'abord coller votre clé Mistral dans la case en bas.");
+            return;
         }
-    }
 
-    async function processImage(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        addBubble('user', "[Screenshot envoyé]");
-        const base64 = await new Promise(r => {
-            const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(file);
-        });
-        runAI(base64, true);
-    }
-
-    async function runAI(content, isImage) {
-        const key = document.getElementById('apiKey').value || localStorage.getItem('mistral_key');
-        if(!key) { alert("Veuillez coller votre clé Mistral en bas à droite"); return; }
-        
-        if(!isImage) addBubble('user', content);
+        addMessage('user', "<i>Analyse de la capture d'écran...</i>");
         loader.style.display = 'block';
 
-        const prompt = "Agis comme Jarvis. Si c'est un screenshot de vente chinois, traduis et explique prix, produit et fiabilité. Si c'est un lien, explique le contenu. Sois très précis et brillant.";
+        // Conversion en Base64
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64Image = reader.result;
+            await callMistral(key, base64Image);
+        };
+        reader.readAsDataURL(file);
+    }
 
-        let payload
+    async function callMistral(key, imageBase64) {
+        // Prompt d'expertise par défaut
+        const prompt = `Tu es Jarvis, un expert en import et en applications chinoises (Taobao, 1688, Pinduoduo). 
+        Analyse cette image :
+        1. TRADUCTION : Traduis tous les textes chinois importants en français.
+        2. PRODUIT : Quel est l'objet exact ? Quelles sont les variantes (tailles, couleurs) ?
+        3. PRIX : Identifie le prix en Yuans (¥) et donne une estimation en Euros (1€ ≈ 7.8¥).
+        4. FIABILITÉ : Analyse les notes du vendeur ou les avis visibles pour me dire si c'est sécurisé.
+        Réponds de manière structurée et intelligente.`;
+
+        try {
+            const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${key}`
+                },
+                body: JSON.stringify({
+                    model: "pixtral-12b-latest",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: prompt },
+                                { type: "image_url", image_url: imageBase64 }
+                            ]
+                        }
+                    ],
+                    max_tokens: 1000
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                addMessage('ai', "ERREUR SYSTÈME : " + data.error.message);
+            } else {
+                const reply = data.choices[0].message.content;
+                addMessage('ai', reply);
+            }
+        } catch (err) {
+            addMessage('ai', "ERREUR RÉSEAU : Impossible de contacter Mistral AI. Vérifiez votre connexion.");
+        } finally {
+            loader.style.display = 'none';
+            document.getElementById('fileInput').value = ""; // Reset input
+        }
+    }
+</script>
+
+</body>
+</html>
