@@ -3,135 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS V19</title>
+    <title>Guardian Network Dashboard</title>
     <style>
-        :root { --jarvis: #00f2ff; --mistral: #ff5e00; --bg: #05070a; }
-        body { 
-            margin: 0; background: var(--bg); color: white; 
-            font-family: sans-serif; display: flex; flex-direction: column; height: 100vh;
-        }
+        :root { --shield: #2ecc71; --bg: #0b0f19; --card: #161c2d; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        h1 { color: var(--shield); text-align: center; border-bottom: 2px solid var(--shield); padding-bottom: 10px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: var(--card); border: 1px solid #2d3748; padding: 20px; border-radius: 12px; }
+        .card h2 { margin-top: 0; color: var(--shield); font-size: 18px; }
 
-        /* CONFIGURATION CLÉ API - BIEN VISIBLE EN HAUT */
-        .api-box {
-            background: #111;
-            border: 2px solid var(--mistral);
-            padding: 15px;
-            margin: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px var(--mistral);
-        }
-        .api-box label { display: block; font-size: 12px; color: var(--mistral); font-weight: bold; margin-bottom: 5px; }
-        .api-box input { 
-            width: 100%; background: #000; border: 1px solid #444; color: white; 
-            padding: 10px; border-radius: 5px; box-sizing: border-box; font-size: 14px;
-        }
+        .device-list { list-style: none; padding: 0; }
+        .device-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2d3748; }
+        .status-online { color: var(--shield); font-weight: bold; }
 
-        /* Fenêtre de Chat */
-        #chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 14px; line-height: 1.5; }
-        .ai { align-self: flex-start; background: #1a1f26; border: 1px solid #30363d; border-bottom-left-radius: 2px; }
-        .user { align-self: flex-end; background: var(--jarvis); color: black; font-weight: bold; border-bottom-right-radius: 2px; }
+        input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
+        button { background: var(--shield); color: black; font-weight: bold; cursor: pointer; }
 
-        /* Bouton Scan */
-        .footer { padding: 20px; background: #0d1117; display: flex; justify-content: center; border-top: 1px solid #222; }
-        #scan-btn {
-            width: 70px; height: 70px; border: 3px solid var(--jarvis); border-radius: 50%;
-            background: #000; cursor: pointer; box-shadow: 0 0 20px var(--jarvis);
-            display: flex; align-items: center; justify-content: center;
-        }
-        #scan-btn:active { transform: scale(0.9); }
-        #scan-btn div { width: 20px; height: 20px; background: var(--jarvis); border-radius: 50%; }
-
-        .loader { display: none; text-align: center; color: var(--jarvis); padding: 10px; font-size: 12px; }
+        .cmd { background: black; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; margin-top: 10px; overflow-x: auto; }
     </style>
 </head>
 <body>
 
-    <!-- LA CASE POUR TA CLÉ API -->
-    <div class="api-box">
-        <label>CONFIGURER CERVEAU MISTRAL :</label>
-        <input type="password" id="apiKey" placeholder="Colle ta clé API ici..." onchange="saveKey(this.value)">
-        <div style="font-size: 9px; color: #888; margin-top: 5px;">Ta clé est enregistrée localement dans ton téléphone.</div>
-    </div>
+    <h1>GUARDIAN NETWORK DASHBOARD</h1>
 
-    <div id="chat">
-        <div class="msg ai">Monsieur, la case de configuration est juste au-dessus. Collez votre clé Mistral, puis appuyez sur le bouton SCAN bleu en bas pour m'envoyer un screenshot chinois.</div>
-    </div>
+    <div class="grid">
+        <!-- 1. Inventaire des Appareils -->
+        <div class="card">
+            <h2>📦 INVENTAIRE DES APPAREILS</h2>
+            <div id="device-list" class="device-list">
+                <!-- Les appareils s'afficheront ici -->
+            </div>
+            <input type="text" id="devName" placeholder="Nom de l'appareil (ex: Caméra Salon)">
+            <input type="text" id="devIP" placeholder="Adresse IP (ex: 192.168.1.50)">
+            <button onclick="addDevice()">AJOUTER À L'INVENTAIRE</button>
+        </div>
 
-    <div id="loader">ANALYSE JARVIS EN COURS...</div>
+        <!-- 2. Audit de Sécurité Manuel -->
+        <div class="card">
+            <h2>🔍 OUTILS DE DIAGNOSTIC (Terminal)</h2>
+            <p style="font-size: 12px;">Tapez ces commandes dans votre terminal pour voir qui est connecté :</p>
+            <div class="cmd"># Scanner les appareils sur le réseau :<br>nmap -sn 192.168.1.0/24</div>
+            <div class="cmd"># Voir les ports ouverts sur une IP :<br>nmap -T4 -A 192.168.1.50</div>
+            <div class="cmd"># Lister les connexions actives :<br>arp -a</div>
+        </div>
 
-    <div class="footer">
-        <div id="scan-btn" onclick="document.getElementById('fileInput').click()">
-            <div></div>
+        <!-- 3. Checklist de Défense -->
+        <div class="card">
+            <h2>🛡️ CHECKLIST DE SÉCURITÉ</h2>
+            <div style="font-size: 13px;">
+                <input type="checkbox"> Chiffrement WPA3 activé sur le routeur<br>
+                <input type="checkbox"> Mises à jour effectuées sur tous les IoT<br>
+                <input type="checkbox"> Mots de passe par défaut modifiés<br>
+                <input type="checkbox"> UPnP désactivé sur le routeur<br>
+                <input type="checkbox"> Isolation du réseau invité configurée<br>
+            </div>
         </div>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImage(event)">
+    <script>
+        let devices = JSON.parse(localStorage.getItem('guardian_devices')) || [];
 
-<script>
-    const chat = document.getElementById('chat');
-    const loader = document.getElementById('loader');
-    const apiKeyInput = document.getElementById('apiKey');
-
-    // Sauvegarde auto
-    function saveKey(v) { localStorage.setItem('mistral_v19', v.trim()); }
-    
-    // Chargement auto
-    window.onload = () => {
-        const saved = localStorage.getItem('mistral_v19');
-        if(saved) apiKeyInput.value = saved;
-    };
-
-    function addMsg(type, text) {
-        const d = document.createElement('div');
-        d.className = `msg ${type}`;
-        d.innerHTML = text.replace(/\n/g, '<br>');
-        chat.appendChild(d);
-        chat.scrollTop = chat.scrollHeight;
-    }
-
-    async function handleImage(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-
-        const key = apiKeyInput.value || localStorage.getItem('mistral_v19');
-        if(!key) { alert("Veuillez d'abord remplir la case orange en haut !"); return; }
-
-        addMsg('user', "Analyse de mon écran...");
-        loader.style.display = 'block';
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-            const base64 = reader.result;
-            await askMistral(key, base64);
-        };
-    }
-
-    async function askMistral(key, img) {
-        const prompt = "Tu es Jarvis. Analyse cet écran d'application chinoise. Traduis le texte important en français. Explique le produit, le prix en Yuans et Euros, et dis-moi si c'est fiable.";
-        
-        try {
-            const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-                body: JSON.stringify({
-                    model: "pixtral-12b-latest",
-                    messages: [{
-                        role: "user",
-                        content: [
-                            { type: "text", text: prompt },
-                            { type: "image_url", image_url: img }
-                        ]
-                    }]
-                })
+        function renderDevices() {
+            const list = document.getElementById('device-list');
+            list.innerHTML = "";
+            devices.forEach((d, index) => {
+                list.innerHTML += `
+                    <div class="device-item">
+                        <span>${d.name} (${d.ip})</span>
+                        <span class="status-online">SURVEILLÉ</span>
+                    </div>
+                `;
             });
+        }
 
-            const data = await resp.json();
-            if(data.error) {
-                addMsg('ai', "ERREUR : " + data.error.message);
-            } else {
-                addMsg('ai', data.choices[0].message.content);
+        function addDevice() {
+            const name = document.getElementById('devName').value;
+            const ip = document.getElementById('devIP').value;
+            if(name && ip) {
+                devices.push({name, ip});
+                localStorage.setItem('guardian_devices', JSON.stringify(devices));
+                renderDevices();
+                document.getElementById('devName').value = "";
+                document.getElementById('devIP').value = "";
             }
-        } catch (err) {
-            addMsg('ai', "ERREUR RÉSEAU : Impossible de joindre Mistral.");
+        }
+
+        renderDevices();
+    </script>
+</body>
+</html>
