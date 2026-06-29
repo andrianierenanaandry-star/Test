@@ -3,165 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS V18 - MISTRAL AI</title>
+    <title>JARVIS V19</title>
     <style>
-        :root { --jarvis-color: #00f2ff; --bg-dark: #05070a; }
+        :root { --jarvis: #00f2ff; --mistral: #ff5e00; --bg: #05070a; }
         body { 
-            margin: 0; background-color: var(--bg-dark); color: #ffffff; 
-            font-family: 'Segoe UI', Roboto, sans-serif; display: flex; 
-            flex-direction: column; height: 100vh; overflow: hidden;
+            margin: 0; background: var(--bg); color: white; 
+            font-family: sans-serif; display: flex; flex-direction: column; height: 100vh;
         }
 
-        /* Interface Chat Style Jarvis */
-        .header { padding: 15px; border-bottom: 2px solid var(--jarvis-color); text-align: center; box-shadow: 0 0 15px var(--jarvis-color); }
-        .header h2 { margin: 0; font-size: 18px; letter-spacing: 3px; color: var(--jarvis-color); }
+        /* CONFIGURATION CLÉ API - BIEN VISIBLE EN HAUT */
+        .api-box {
+            background: #111;
+            border: 2px solid var(--mistral);
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--mistral);
+        }
+        .api-box label { display: block; font-size: 12px; color: var(--mistral); font-weight: bold; margin-bottom: 5px; }
+        .api-box input { 
+            width: 100%; background: #000; border: 1px solid #444; color: white; 
+            padding: 10px; border-radius: 5px; box-sizing: border-box; font-size: 14px;
+        }
 
-        #chat-container { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-        .bubble { max-width: 85%; padding: 12px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+        /* Fenêtre de Chat */
+        #chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 12px; border-radius: 15px; font-size: 14px; line-height: 1.5; }
         .ai { align-self: flex-start; background: #1a1f26; border: 1px solid #30363d; border-bottom-left-radius: 2px; }
-        .user { align-self: flex-end; background: var(--jarvis-color); color: #000; font-weight: 500; border-bottom-right-radius: 2px; }
+        .user { align-self: flex-end; background: var(--jarvis); color: black; font-weight: bold; border-bottom-right-radius: 2px; }
 
-        /* Le Bouton Central de Scan */
-        .controls { padding: 20px; background: #0d1117; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        #jarvis-orb {
-            width: 70px; height: 70px; border: 3px solid var(--jarvis-color); border-radius: 50%;
+        /* Bouton Scan */
+        .footer { padding: 20px; background: #0d1117; display: flex; justify-content: center; border-top: 1px solid #222; }
+        #scan-btn {
+            width: 70px; height: 70px; border: 3px solid var(--jarvis); border-radius: 50%;
+            background: #000; cursor: pointer; box-shadow: 0 0 20px var(--jarvis);
             display: flex; align-items: center; justify-content: center;
-            background: #000; cursor: pointer; box-shadow: 0 0 20px var(--jarvis-color);
-            transition: transform 0.2s;
         }
-        #jarvis-orb:active { transform: scale(0.9); }
-        #jarvis-orb div { width: 25px; height: 25px; background: var(--jarvis-color); border-radius: 50%; box-shadow: 0 0 10px var(--jarvis-color); }
+        #scan-btn:active { transform: scale(0.9); }
+        #scan-btn div { width: 20px; height: 20px; background: var(--jarvis); border-radius: 50%; }
 
-        .loader { display: none; font-size: 12px; color: var(--jarvis-color); animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.3; } }
-
-        /* Configuration Clé API */
-        #config-area { font-size: 10px; padding: 5px; opacity: 0.4; }
-        input[type="password"] { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 5px; }
+        .loader { display: none; text-align: center; color: var(--jarvis); padding: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div class="header"><h2>JARVIS VISION</h2></div>
-
-<div id="chat-container">
-    <div class="bubble ai">Système prêt, Monsieur. Envoyez une capture d'écran d'une application chinoise, je m'occupe de la traduction et de l'analyse complète.</div>
-</div>
-
-<div id="loader" style="text-align: center; padding: 5px;">ANALYSE EN COURS...</div>
-
-<div class="controls">
-    <div id="jarvis-orb" onclick="openGallery()">
-        <div></div>
+    <!-- LA CASE POUR TA CLÉ API -->
+    <div class="api-box">
+        <label>CONFIGURER CERVEAU MISTRAL :</label>
+        <input type="password" id="apiKey" placeholder="Colle ta clé API ici..." onchange="saveKey(this.value)">
+        <div style="font-size: 9px; color: #888; margin-top: 5px;">Ta clé est enregistrée localement dans ton téléphone.</div>
     </div>
-    <div style="font-size: 12px; color: var(--jarvis-color);">TAPOTEZ POUR SCANNER</div>
-</div>
 
-<div id="config-area">
-    Clé Mistral : <input type="password" id="apiKey" placeholder="Collez votre clé gsk_ ou mistral ici..." onchange="saveKey(this.value)">
-</div>
+    <div id="chat">
+        <div class="msg ai">Monsieur, la case de configuration est juste au-dessus. Collez votre clé Mistral, puis appuyez sur le bouton SCAN bleu en bas pour m'envoyer un screenshot chinois.</div>
+    </div>
 
-<!-- Input caché -->
-<input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+    <div id="loader">ANALYSE JARVIS EN COURS...</div>
+
+    <div class="footer">
+        <div id="scan-btn" onclick="document.getElementById('fileInput').click()">
+            <div></div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleImage(event)">
 
 <script>
-    const chatContainer = document.getElementById('chat-container');
+    const chat = document.getElementById('chat');
     const loader = document.getElementById('loader');
     const apiKeyInput = document.getElementById('apiKey');
 
-    // Sauvegarde automatique de la clé par défaut
-    function saveKey(val) {
-        localStorage.setItem('mistral_api_key', val.trim());
-    }
-
-    // Chargement de la clé enregistrée
+    // Sauvegarde auto
+    function saveKey(v) { localStorage.setItem('mistral_v19', v.trim()); }
+    
+    // Chargement auto
     window.onload = () => {
-        const savedKey = localStorage.getItem('mistral_api_key');
-        if (savedKey) apiKeyInput.value = savedKey;
+        const saved = localStorage.getItem('mistral_v19');
+        if(saved) apiKeyInput.value = saved;
     };
 
-    function openGallery() {
-        document.getElementById('fileInput').click();
+    function addMsg(type, text) {
+        const d = document.createElement('div');
+        d.className = `msg ${type}`;
+        d.innerHTML = text.replace(/\n/g, '<br>');
+        chat.appendChild(d);
+        chat.scrollTop = chat.scrollHeight;
     }
 
-    function addMessage(type, text) {
-        const div = document.createElement('div');
-        div.className = `bubble ${type}`;
-        div.innerHTML = text.replace(/\n/g, '<br>');
-        chatContainer.appendChild(div);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    async function handleImage(e) {
+        const file = e.target.files[0];
+        if(!file) return;
 
-    async function handleFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const key = apiKeyInput.value || localStorage.getItem('mistral_v19');
+        if(!key) { alert("Veuillez d'abord remplir la case orange en haut !"); return; }
 
-        const key = apiKeyInput.value || localStorage.getItem('mistral_api_key');
-        if (!key) {
-            alert("Monsieur, veuillez d'abord coller votre clé Mistral dans la case en bas.");
-            return;
-        }
-
-        addMessage('user', "<i>Analyse de la capture d'écran...</i>");
+        addMsg('user', "Analyse de mon écran...");
         loader.style.display = 'block';
 
-        // Conversion en Base64
         const reader = new FileReader();
-        reader.onload = async () => {
-            const base64Image = reader.result;
-            await callMistral(key, base64Image);
-        };
         reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64 = reader.result;
+            await askMistral(key, base64);
+        };
     }
 
-    async function callMistral(key, imageBase64) {
-        // Prompt d'expertise par défaut
-        const prompt = `Tu es Jarvis, un expert en import et en applications chinoises (Taobao, 1688, Pinduoduo). 
-        Analyse cette image :
-        1. TRADUCTION : Traduis tous les textes chinois importants en français.
-        2. PRODUIT : Quel est l'objet exact ? Quelles sont les variantes (tailles, couleurs) ?
-        3. PRIX : Identifie le prix en Yuans (¥) et donne une estimation en Euros (1€ ≈ 7.8¥).
-        4. FIABILITÉ : Analyse les notes du vendeur ou les avis visibles pour me dire si c'est sécurisé.
-        Réponds de manière structurée et intelligente.`;
-
+    async function askMistral(key, img) {
+        const prompt = "Tu es Jarvis. Analyse cet écran d'application chinoise. Traduis le texte important en français. Explique le produit, le prix en Yuans et Euros, et dis-moi si c'est fiable.";
+        
         try {
-            const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+            const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${key}`
-                },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
                 body: JSON.stringify({
                     model: "pixtral-12b-latest",
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: prompt },
-                                { type: "image_url", image_url: imageBase64 }
-                            ]
-                        }
-                    ],
-                    max_tokens: 1000
+                    messages: [{
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: img }
+                        ]
+                    }]
                 })
             });
 
-            const data = await response.json();
-
-            if (data.error) {
-                addMessage('ai', "ERREUR SYSTÈME : " + data.error.message);
+            const data = await resp.json();
+            if(data.error) {
+                addMsg('ai', "ERREUR : " + data.error.message);
             } else {
-                const reply = data.choices[0].message.content;
-                addMessage('ai', reply);
+                addMsg('ai', data.choices[0].message.content);
             }
         } catch (err) {
-            addMessage('ai', "ERREUR RÉSEAU : Impossible de contacter Mistral AI. Vérifiez votre connexion.");
-        } finally {
-            loader.style.display = 'none';
-            document.getElementById('fileInput').value = ""; // Reset input
-        }
-    }
-</script>
-
-</body>
-</html>
+            addMsg('ai', "ERREUR RÉSEAU : Impossible de joindre Mistral.");
